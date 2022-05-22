@@ -102,3 +102,15 @@ dist
 
 # TernJS port file
 .tern-port
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+yarn.lock
+package-lock.json
