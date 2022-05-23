@@ -7,7 +7,6 @@ function flatAction(program) {
   .option('-s, --src <string>', '要扁平的目录', './')
   .option('-d, --dest <string>', '扁平输出目录', './')
   .action((argv, c) => {
-    console.log(argv)
     const { src, dest } = argv
     flatDirectory({ src, dest })
   })

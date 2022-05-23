@@ -44,10 +44,8 @@ function findDirectorySync(dirs) {
 function genOutputPath(src, dest) {
   // 过滤掉文件和已经提取出来的文件夹
   const files = readDirectorySync(src).filter(item => fs.statSync(item).isDirectory() && readdirSync(item).length === 1)
-  console.log(files.length)
   const list = files.map(item => {
     const file = findDirectorySync(item)
-    // console.log(item, 'file:', file)
     const { base } = path.parse(file)
     return {
       src: file,

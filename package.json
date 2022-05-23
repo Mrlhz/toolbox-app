@@ -1,6 +1,6 @@
 {
   "name": "toolbox-app",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "工具箱",
   "main": "./app/core/index.js",
   "type": "commonjs",
@@ -27,8 +27,7 @@
   },
   "dependencies": {
     "commander": "^9.2.0",
-    "fs-extra": "^10.1.0",
-    "yargs": "^17.5.1"
+    "fs-extra": "^10.1.0"
   },
   "repository": "git@github.com:Mrlhz/toolbox-app.git"
 }
