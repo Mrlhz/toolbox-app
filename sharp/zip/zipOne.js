@@ -12,6 +12,10 @@ async function zipOne({ input, fileOut, format = 'jpeg', options = { mozjpeg: tr
     .resize(Math.round(width / 2))
     .toFormat(format, options)
     .toFile(fileOut)
+    .catch(e => {
+      // return { status: 'rejected', error: e } // todo
+      return Promise.reject(e.message)
+    })
 }
 
 function getNewName(file) {
