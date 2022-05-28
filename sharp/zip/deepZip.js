@@ -14,19 +14,10 @@ function defaultOutputPath(pathLike, output) {
   return path.resolve(output, `${name}[zip]`)
 }
 
-
-async function deepZip(pathLike, output) {
-  console.time('Done in ')
-  const outputPath = defaultOutputPath(pathLike, output)
-
-  if (!fs.pathExistsSync(outputPath)) {
-    fs.ensureDirSync(outputPath)
-  }
-  const allFiles = deepTraverse(pathLike)
-  const existTasks = []
+function filterImage(allFiles = [], outputPath) {
+  if (!allFiles) return []
   const filterFiles = [] // { file, fileOut }
-
-  // filter non-image, copied image
+  const existTasks = []
   for (let k = 0, len = allFiles.length; k < len; k++) {
     const file = allFiles[k]
     if (!isImage(file)) {
@@ -50,6 +41,20 @@ async function deepZip(pathLike, output) {
     filterFiles.push({ file, fileOut, name })
   }
 
+  return { filterFiles, existTasks }
+}
+
+
+async function deepZip(pathLike, output) {
+  console.time('Done in ')
+  const outputPath = defaultOutputPath(pathLike, output)
+
+  if (!fs.pathExistsSync(outputPath)) {
+    fs.ensureDirSync(outputPath)
+  }
+  const allFiles = deepTraverse(pathLike)
+  // filter non-image, copied image
+  const { filterFiles, existTasks } = filterImage(allFiles, outputPath) // // { file, fileOut }
   // filter end
   const failTasks = []
   let tasks = []
@@ -72,9 +77,11 @@ async function deepZip(pathLike, output) {
     // await sleep(1500)
 
     // 2.
+    // 触发任务
+    const isLastOne = i === l - 1
     tasks.push(zipOne({ input: file, fileOut, format: 'jpeg', options: {} }))
     console.log(tasks.length, 'len', i, l)
-    if (tasks.length >= 50 || i === l - 1) {
+    if (tasks.length >= 50 || isLastOne) {
       // 提成方法
       const res = await Promise.allSettled(tasks)
       resultList.push(...res)
@@ -83,7 +90,9 @@ async function deepZip(pathLike, output) {
         return { status, reason, file }
       })
       failTasks.push(...failTaskList)
-      await sleep(3000)
+      if (!isLastOne) {
+        await sleep(3000)
+      }
       tasks = []
     }
 
