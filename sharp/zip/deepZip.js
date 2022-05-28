@@ -8,8 +8,6 @@ const { isImage, sleep } = require('../../app/utils/index')
 function defaultOutputPath(pathLike, output) {
   const { dir, name } = path.parse(pathLike)
   if (output === pathLike || !output) {
-    // return { outputPath: dir, name }
-    // todo
     return path.resolve(dir, `${name}[zip]`)
   }
 
@@ -28,20 +26,18 @@ async function deepZip(pathLike, output) {
   const existTasks = []
   const filterFiles = [] // { file, fileOut }
 
-  // filter
-
+  // filter non-image, copied image
   for (let k = 0, len = allFiles.length; k < len; k++) {
     const file = allFiles[k]
     if (!isImage(file)) {
       continue
     }
-    // { dir: 'F:\\物恋传媒\\菜菜\\物恋传媒 No.931 菜菜 微风与诗声 [154P1V4.40G]', name: '001' } = path.parse(file)
+    // { dir: 'F:\\物恋传媒\\菜菜\\xxx', name: '001' } = path.parse(file)
     const { dir, name } = path.parse(file)
-    const { base } = path.parse(dir) // base: '物恋传媒 No.931 菜菜 微风与诗声 [154P1V4.40G]'
+    const { base } = path.parse(dir) // base: 'xxx'
     const o = path.resolve(outputPath, base) // 
 
-    // console.log({o}, name)
-    // o: 'F:\\物恋传媒\\菜菜[zip]\\物恋传媒 No.931 菜菜 微风与诗声 [154P1V4.40G]'
+    // o: 'F:\\物恋传媒\\菜菜[zip]\\xxx'
     if (!fs.pathExistsSync(o)) {
       fs.ensureDirSync(o)
     }
@@ -55,8 +51,6 @@ async function deepZip(pathLike, output) {
   }
 
   // filter end
-  // console.log(allFiles.slice(100))
-  // const tasks = []
   const failTasks = []
   let tasks = []
   const copyTasks = []
@@ -64,24 +58,6 @@ async function deepZip(pathLike, output) {
   const resultList = []
   for (let i = 0, l = filterFiles.length; i < l; i++) {
     const { file, fileOut, name } = filterFiles[i]
-    // if (!isImage(file)) {
-    //   continue
-    // }
-    // // { dir: 'F:\\物恋传媒\\菜菜\\物恋传媒 No.931 菜菜 微风与诗声 [154P1V4.40G]', name: '001' } = path.parse(file)
-    // const { dir, name } = path.parse(file)
-    // const { base } = path.parse(dir) // base: '物恋传媒 No.931 菜菜 微风与诗声 [154P1V4.40G]'
-    // const o = path.resolve(outputPath, base) // 
-
-    // // console.log({o}, name)
-    // // o: 'F:\\物恋传媒\\菜菜[zip]\\物恋传媒 No.931 菜菜 微风与诗声 [154P1V4.40G]'
-    // if (!fs.pathExistsSync(o)) {
-    //   fs.ensureDirSync(o)
-    // }
-    // const fileOut = path.resolve(o, `${name}.jpeg`)
-    // if (fs.pathExistsSync(fileOut)) {
-    //   existTasks.push(fileOut)
-    //   continue
-    // }
     console.log(name)
 
     // 1.
@@ -113,7 +89,6 @@ async function deepZip(pathLike, output) {
 
   }
 
-  // const result = await Promise.allSettled(tasks)
   console.timeEnd('Done in ')
   console.log('exist', existTasks.length)
   console.log({ failTasks }, failTasks.length, copyTasks.length)
@@ -128,9 +103,9 @@ async function deepZip(pathLike, output) {
 
 
 // deepZip('F:\\物恋传媒\\心心')
-// deepZip('F:\\物恋传媒\\菜菜\\物恋传媒 No.931 菜菜 微风与诗声 [154P1V4.40G]')
+// deepZip('F:\\物恋传媒\\菜菜\\xxx')
 // deepZip('F:\\物恋传媒\\菜菜')
 // deepZip('F:\\森罗财团\\森萝财团 JKFUN 《GG-03》JK制服 希晨 [96P1V2.54G]')
 deepZip('F:\\森罗财团\\有料')
 
-// console.log('F:\\物恋传媒\\菜菜\\物恋传媒 No.931 菜菜 微风与诗声 [154P1V4.40G]'.split(path.sep))
+// console.log('F:\\物恋传媒\\菜菜\\xxx'.split(path.sep))
