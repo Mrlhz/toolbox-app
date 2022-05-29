@@ -29,13 +29,13 @@ function findDirectorySync(dirs) {
     if (fs.statSync(file).isDirectory()) {
       file = readDirectorySync(file)
     }
-    if (Array.isArray(file)) {
+    if (Array.isArray(file) && file.length) {
       return path.dirname(file[0])
     }
-    if (fs.statSync(file).isFile()) {
+    if (typeof file === 'string' && fs.statSync(file).isFile()) {
       return file
     } else {
-      console.log('else', file)
+      console.log('else', file) // file 空数组
       // break
     }
   }
@@ -46,6 +46,7 @@ function genOutputPath(src, dest) {
   const files = readDirectorySync(src).filter(item => fs.statSync(item).isDirectory() && readdirSync(item).length === 1)
   const list = files.map(item => {
     const file = findDirectorySync(item)
+    if (!file) return { src: file, dest: '' } // 空目录返回输出路径为空，用于判断过滤
     const { base } = path.parse(file)
     return {
       src: file,
@@ -55,12 +56,29 @@ function genOutputPath(src, dest) {
   return list
 }
 
-async function moveOutNextLevelDirectory({ src, dest }) {
+async function moveOutNextLevelDirectory({ src, dest, remove }) {
   if (!fs.pathExistsSync(src) || !fs.pathExistsSync(dest)) return
   const list = genOutputPath(src, dest)
   console.log({ list })
-  const tasks = list.map(item => move(item.src, item.dest, { overwrite: false }))
+  // 过滤掉空目录
+  const tasks = list.filter(item => item.dest).map(item => move(item.src, item.dest, { overwrite: false }))
   const result = await Promise.allSettled(tasks)
+  await removeEmptyDirectory(src, remove)
+  return result
+}
+
+// 删除空目录
+async function removeEmptyDirectory(pathLike, remove = false) {
+  if (!remove) return
+  const emptyDirs = fs.readdirSync(pathLike)
+    .map(file => path.resolve(pathLike, file))
+    .filter(file => fs.statSync(file).isDirectory())
+    .filter(file => !fs.readdirSync(file).length)
+
+  const tasks = emptyDirs.map(dir => fs.remove(dir).then(() => dir))
+  const result = await Promise.allSettled(tasks)
+  console.log(`success deleted the following empty directory: `)
+  console.log(result)
   return result
 }
 
