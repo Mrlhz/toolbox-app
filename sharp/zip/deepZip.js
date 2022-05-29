@@ -43,7 +43,7 @@ function getTargetPathIndex(pathLike) {
   return pathLikeArray.length - 1
 }
 
-function filterImage({ allFiles = [], outputPath, start }) {
+function getImageList({ allFiles = [], outputPath, start }) {
   if (!allFiles) return []
   const filterFiles = [] // { file, fileOut }
   const existTasks = []
@@ -55,11 +55,9 @@ function filterImage({ allFiles = [], outputPath, start }) {
     // { dir: 'F:\\x1\\x2\\x3', name: '001' } = path.parse(file)
     const { dir, name } = path.parse(file)
 
-    const filePathArray = file.split(path.sep)
-    filePathArray[start] = filePathArray[start] + '[zip]'
-
-    const o = filePathArray.slice(0, filePathArray.length - 1).join(path.sep)
-    // o: 'F:\\x1\\x2[zip]\\x3'
+    const filePathArray = file.split(path.sep) // ['F:', 'x1', 'x2', 'x3', '001.jpg']
+    const filePartPath = filePathArray.slice(start + 1, filePathArray.length - 1).join(path.sep) // => ['x3'].join('\\')
+    const o = path.resolve(outputPath, filePartPath) // pathLike 'F:\\x1\\x2', if output has value 'D:\\x2[zip]\\x3', else 'F:\\x1\\x2[zip]\\x3'
     if (!fs.pathExistsSync(o)) {
       fs.ensureDirSync(o)
     }
@@ -78,6 +76,7 @@ function filterImage({ allFiles = [], outputPath, start }) {
 
 
 async function deepZip(pathLike, output) {
+  if (!fs.pathExistsSync(pathLike)) return
   console.time('Done in ')
   const outputPath = defaultOutputPath(pathLike, output)
 
@@ -87,9 +86,7 @@ async function deepZip(pathLike, output) {
   const allFiles = deepTraverse(pathLike)
   const start = getTargetPathIndex(pathLike)
   // filter non-image, copied image
-  const { filterFiles, existTasks } = filterImage({ allFiles, outputPath, start }) // { file, fileOut }
-  console.log(filterFiles, outputPath)
-  return
+  const { filterFiles, existTasks } = getImageList({ allFiles, outputPath, start }) // { file, fileOut }
   // filter end
   const failTasks = []
   let tasks = []
@@ -98,7 +95,7 @@ async function deepZip(pathLike, output) {
   const resultList = []
   for (let i = 0, l = filterFiles.length; i < l; i++) {
     const { file, fileOut, name } = filterFiles[i]
-    console.log(name)
+    console.log(name, `i: ${i.toString().padStart(4, ' ')}/${l}`)
 
     // 1.
     // try {
@@ -120,7 +117,7 @@ async function deepZip(pathLike, output) {
       // 提成方法
       const res = await Promise.allSettled(tasks)
       resultList.push(...res)
-      const failTaskList = res.filter(({ status, reason, value }) => [status, value && value.status && value.status].includes('rejected')).map(({ status, value, reason }) => {
+      const failTaskList = res.filter(({ status, reason, value }) => [status].includes('rejected')).map(({ status, value, reason }) => {
         copyTasks.push({ oldFile: file, newFile: fileOut })
         return { status, reason, file }
       })
@@ -151,7 +148,7 @@ async function deepZip(pathLike, output) {
 // deepZip('F:\\物恋传媒\\菜菜')
 // deepZip('F:\\森罗财团\\森萝财团 JKFUN 《GG-03》JK制服 希晨 [96P1V2.54G]')
 // deepZip('F:\\森罗财团\\有料')
-deepZip('F:\\微博COSER 木绵绵系列合集', 'D:\\')
+deepZip('F:\\微博COSER 木绵绵系列合集')
 
 // e.g. 
 // deepZip('F:\\x1\\x2')
