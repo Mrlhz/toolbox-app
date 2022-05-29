@@ -5,6 +5,21 @@ const { deepTraverse } = require('./deepTraverse')
 const { zipOne } = require('./zipOne')
 const { isImage, sleep } = require('../../app/utils/index')
 
+/**
+ * @description 如果输入路径跟输出路径一样或者 输出路径为空，返回 pathLike + '[zip]'，否则返回填入的输出路径
+ * @param {path} pathLike 输入路径
+ * @param {*} output 输出路径
+ * @returns {string} output + '[zip]'
+ * @example
+ * defaultOutputPath('F:\\x1\\x2')
+ * => 'F:\\x1\\x2[zip]'
+ * 
+ * defaultOutputPath('F:\\x1\\x2', 'F:\\x1\\x2')
+ * => 'F:\\x1\\x2[zip]'
+ *
+ * defaultOutputPath('F:\\x1\\x2', 'F:\\')
+ * => 'F:\\x2[zip]'
+ */
 function defaultOutputPath(pathLike, output) {
   const { dir, name } = path.parse(pathLike)
   if (output === pathLike || !output) {
@@ -14,7 +29,21 @@ function defaultOutputPath(pathLike, output) {
   return path.resolve(output, `${name}[zip]`)
 }
 
-function filterImage(allFiles = [], outputPath) {
+/**
+ * @description 将输入路径split成数组，获取最后一个路径片段的下标 index
+ * @param {path} pathLike A path to a file.
+ * @returns {number} Returns the index of the found element, else `-1`.
+ * @example
+ * getTargetPathIndex('F:\\x1\\x2\\x3')
+ * ['F:', 'x1', 'x2', 'x3']
+ * return 3
+ */
+function getTargetPathIndex(pathLike) {
+  const pathLikeArray = pathLike.split(path.sep)
+  return pathLikeArray.length - 1
+}
+
+function filterImage({ allFiles = [], outputPath, start }) {
   if (!allFiles) return []
   const filterFiles = [] // { file, fileOut }
   const existTasks = []
@@ -23,12 +52,14 @@ function filterImage(allFiles = [], outputPath) {
     if (!isImage(file)) {
       continue
     }
-    // { dir: 'F:\\物恋传媒\\菜菜\\xxx', name: '001' } = path.parse(file)
+    // { dir: 'F:\\x1\\x2\\x3', name: '001' } = path.parse(file)
     const { dir, name } = path.parse(file)
-    const { base } = path.parse(dir) // base: 'xxx'
-    const o = path.resolve(outputPath, base) // 
 
-    // o: 'F:\\物恋传媒\\菜菜[zip]\\xxx'
+    const filePathArray = file.split(path.sep)
+    filePathArray[start] = filePathArray[start] + '[zip]'
+
+    const o = filePathArray.slice(0, filePathArray.length - 1).join(path.sep)
+    // o: 'F:\\x1\\x2[zip]\\x3'
     if (!fs.pathExistsSync(o)) {
       fs.ensureDirSync(o)
     }
@@ -41,6 +72,7 @@ function filterImage(allFiles = [], outputPath) {
     filterFiles.push({ file, fileOut, name })
   }
 
+  fs.outputJsonSync(`${outputPath}/filterFiles-${Date.now()}.json`, { filterFiles, length: filterFiles.length })
   return { filterFiles, existTasks }
 }
 
@@ -53,8 +85,11 @@ async function deepZip(pathLike, output) {
     fs.ensureDirSync(outputPath)
   }
   const allFiles = deepTraverse(pathLike)
+  const start = getTargetPathIndex(pathLike)
   // filter non-image, copied image
-  const { filterFiles, existTasks } = filterImage(allFiles, outputPath) // // { file, fileOut }
+  const { filterFiles, existTasks } = filterImage({ allFiles, outputPath, start }) // { file, fileOut }
+  console.log(filterFiles, outputPath)
+  return
   // filter end
   const failTasks = []
   let tasks = []
@@ -115,6 +150,8 @@ async function deepZip(pathLike, output) {
 // deepZip('F:\\物恋传媒\\菜菜\\xxx')
 // deepZip('F:\\物恋传媒\\菜菜')
 // deepZip('F:\\森罗财团\\森萝财团 JKFUN 《GG-03》JK制服 希晨 [96P1V2.54G]')
-deepZip('F:\\森罗财团\\有料')
+// deepZip('F:\\森罗财团\\有料')
+deepZip('F:\\微博COSER 木绵绵系列合集', 'D:\\')
 
-// console.log('F:\\物恋传媒\\菜菜\\xxx'.split(path.sep))
+// e.g. 
+// deepZip('F:\\x1\\x2')
