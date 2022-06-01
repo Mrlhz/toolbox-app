@@ -28,12 +28,12 @@ class Folder {
   }
 
   mkText() {
-    const { name, depth, files } = this
+    const { name, files } = this
     const result = []
-    result.push(`${this.getFolderSpace()} ${name}`)
+    result.push(`${this.getFolderSpace()}${nodeSymbol} ${name}`)
 
     files.forEach(file => {
-      result.push(`${this.getFileSpace()} ${path.basename(file)}`)
+      result.push(`${this.getFileSpace()}${nodeSymbol} ${path.basename(file)}`)
     })
 
     return result
@@ -41,14 +41,14 @@ class Folder {
 
   getFolderSpace() {
     const { depth } = this
-    if (depth === 0) return nodeSymbol
-    return space.repeat(depth) + ' '.repeat(3) + nodeSymbol
+    if (depth === 0) return ''
+    return space.repeat(depth)
   }
 
   getFileSpace() {
     const { depth } = this
-    if (depth === 0) return `${space}${nodeSymbol}`
-    return space.repeat(depth) + ' '.repeat(3) + nodeSymbol
+    if (depth === 0) return space
+    return '    |' + ' '.repeat(depth * 4 - 1)
   }
 }
 
@@ -79,7 +79,7 @@ function deepTraverse(inputPath = path.resolve('.')) {
 
       foldersMap[next] = folder
 
-      folders.push(...subFolders)
+      folders.unshift(...subFolders)
     }
   }
 
