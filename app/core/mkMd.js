@@ -27,13 +27,13 @@ class Folder {
     Object.assign(this, defaultOptions, options)
   }
 
-  mkText() {
+  mkText(isLast) {
     const { name, files } = this
     const result = []
     result.push(`${this.getFolderSpace()}${nodeSymbol} ${name}`)
 
     files.forEach(file => {
-      result.push(`${this.getFileSpace()}${nodeSymbol} ${path.basename(file)}`)
+      result.push(`${this.getFileSpace(isLast)}${nodeSymbol} ${path.basename(file)}`)
     })
 
     return result
@@ -42,12 +42,16 @@ class Folder {
   getFolderSpace() {
     const { depth } = this
     if (depth === 0) return ''
-    return space.repeat(depth)
+    if (depth === 1) return space
+    return '    |' + ' '.repeat((depth - 1) * 4 - 1)
   }
 
-  getFileSpace() {
+  getFileSpace(isLast = false) {
     const { depth } = this
     if (depth === 0) return space
+    if (isLast) {
+      return space.repeat(depth + 1)
+    }
     return '    |' + ' '.repeat(depth * 4 - 1)
   }
 }
@@ -66,9 +70,9 @@ function deepTraverse(inputPath = path.resolve('.')) {
     const isDirectory = statSync(next).isDirectory()
     const { dir, name } = path.parse(next)
     if (isDirectory && !folderIgnoreList.includes(name)) {
-      const files = readdirSync(next).filter(file => !folderIgnoreList.includes(file)).map(file => path.resolve(next, file))
-      const subFolders = files.filter(file => statSync(file).isDirectory())
-      const folder = new Folder({
+      const files = readdirSync(next).map(file => path.resolve(next, file))
+      const subFolders = files.filter(file => statSync(file).isDirectory() && !folderIgnoreList.includes(path.basename(file)))
+      foldersMap[next] = new Folder({
         depth: getDepth(rootDepth, next),
         parentFolder: dir,
         path: next,
@@ -76,8 +80,6 @@ function deepTraverse(inputPath = path.resolve('.')) {
         folders: subFolders,
         files: files.filter(file => statSync(file).isFile())
       })
-
-      foldersMap[next] = folder
 
       folders.unshift(...subFolders)
     }
@@ -91,7 +93,8 @@ function generateMarkdown(foldersMap = {}) {
   const result = []
   for (let i = 0, l = keys.length; i < l; i++) {
     const folder = foldersMap[keys[i]]
-    result.push(...folder.mkText())
+    const isLast = i === l - 1
+    result.push(...folder.mkText(isLast))
   }
   return result.join('\n')
 }
