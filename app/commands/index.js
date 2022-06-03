@@ -5,6 +5,7 @@ const pkg = require('../../package.json')
 
 const clearAction = require('./clear')
 const flatAction = require('./flat')
+const renameAction = require('./rename')
 
 function init() {
   program
@@ -15,6 +16,7 @@ function init() {
 
   clearAction(program)
   flatAction(program)
+  renameAction(program)
 
   program.parse()
 }

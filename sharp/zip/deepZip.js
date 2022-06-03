@@ -32,7 +32,7 @@ function defaultOutputPath(pathLike, output) {
 /**
  * @description 将输入路径split成数组，获取最后一个路径片段的下标 index
  * @param {path} pathLike A path to a file.
- * @returns {number} Returns the index of the found element, else `-1`.
+ * @returns {number} Returns the index of the last element, else `-1`.
  * @example
  * getTargetPathIndex('F:\\x1\\x2\\x3')
  * ['F:', 'x1', 'x2', 'x3']
